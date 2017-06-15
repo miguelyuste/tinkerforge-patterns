@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Thu Jun 15 15:39:10 2017
+
+@author: migue
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Dec 20 19:14:51 2016
 
 @author: MiguelYuste
@@ -50,6 +57,8 @@ if __name__ == '__main__':
 
     # drop useless columns
     del instances['UID']
+    # removing accelerometer temperature readings
+    instances = instances[np.logical_not(np.logical_and(instances['VAR'] == "Temperature", instances['NAME'] == "Accelerometer Bricklet"))]
     del instances['NAME']
     del instances['UNIT']
     
@@ -66,15 +75,10 @@ if __name__ == '__main__':
     instances = instances.dropna()
 
     print("Step 4: {}".format(len(instances)))
-    
-    transf = pd.DataFrame()
-    instances['RAW'][instances['VAR'] == "Temperature" & instances['VAR'].len() == 4] /= 100
-    for i in instances['RAW'][instances['VAR'] == "Temperature"]:
-         if len(i) == 4:
-             i = float(i)/100
-         transf.add(i)
-    instances['RAW'][instances['VAR'] == "Temperature"] = transf
-    # round values to nearest step
+
+    # standarise temperature data
+    instances['RAW'][instances['VAR'] == "Temperature"] = instances['RAW'][instances['VAR'] == "Temperature"].apply(float)
+    instances['RAW'][instances['VAR'] == "Temperature"] /= 100.0
     haha = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], 0.5)
     haha.to_csv(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\haha.csv", sep=';')
 
