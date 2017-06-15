@@ -62,6 +62,12 @@ if __name__ == '__main__':
     for i in notChosen:
         instances = instances[instances['VAR'] != i]
 
+    for i in chosenSensors:
+        plt.figure()
+        plt.title(i)
+        plt.hist(instances['RAW'][instances['VAR'] == i], bins=50)
+        plt.show()
+
     # DATA QUANTIZATION
     # we bin the data of each sensor
     # input data for FPGrowth: one column per sensor. Customise bins number here
