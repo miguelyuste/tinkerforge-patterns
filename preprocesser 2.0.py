@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 15 15:39:10 2017
-
-@author: migue
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Tue Dec 20 19:14:51 2016
 
 @author: MiguelYuste
@@ -23,6 +16,7 @@ import numpy as np
 import multiprocessing
 #import threading
 from functools import partial
+import time
 
 
 def removeIncomplete (timestamp, instances):
@@ -47,6 +41,7 @@ def toSteps(inst, step):
     return  pd.DataFrame(data)
 
 if __name__ == '__main__':
+    start = time.time()
     #path = raw_input("Please, write the path to the CSV file \n")
     path = r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\despacho_liencres - copia.csv"
 
@@ -57,7 +52,7 @@ if __name__ == '__main__':
 
     # drop useless columns
     del instances['UID']
-    # removing accelerometer temperature readings
+    # removing accelerometer temperature readings before we delete the NAME column, which we dont need
     instances = instances[np.logical_not(np.logical_and(instances['VAR'] == "Temperature", instances['NAME'] == "Accelerometer Bricklet"))]
     del instances['NAME']
     del instances['UNIT']
@@ -76,11 +71,27 @@ if __name__ == '__main__':
 
     print("Step 4: {}".format(len(instances)))
 
-    # standarise temperature data
+    # ERROR: dataframe is still string despite conversion
+    # standardise temperature data, by rounding in steps of 0.5 degrees
     instances['RAW'][instances['VAR'] == "Temperature"] = instances['RAW'][instances['VAR'] == "Temperature"].apply(float)
     instances['RAW'][instances['VAR'] == "Temperature"] /= 100.0
-    haha = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], 0.5)
-    haha.to_csv(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\haha.csv", sep=';')
+    instances['RAW'][instances['VAR'] == "Temperature"] = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], 0.5)
+    # standardise illuminance data, by rounding in steps of 1 lux
+    instances['RAW'][instances['VAR'] == "Illuminance"] = toSteps(instances['RAW'][instances['VAR'] == "Illuminance"], 100)
+    # standardise sound intensity data, by rounding in steps of 5 units (upper envelope value)
+    instances['RAW'][instances['VAR'] == "Intensity"] = toSteps(instances['RAW'][instances['VAR'] == "Intensity"], 5)
+    # standardise humidity data, by rounding in steps of 5 units (% of relative humidty)
+    instances['RAW'][instances['VAR'] == "Humidity"] = instances['RAW'][instances['VAR'] == "Humidity"].apply(float)
+    instances['RAW'][instances['VAR'] == "Humidity"] *= 10.0
+    instances['RAW'][instances['VAR'] == "Humidity"] = toSteps(instances['RAW'][instances['VAR'] == "Humidity"], 5)
+    # standardise CO2 data, by rounding in steps of 50 ppm
+    instances['RAW'][instances['VAR'] == "CO2 Concentration"] = toSteps(instances['RAW'][instances['VAR'] == "CO2 Concentration"], 50)
+    # standardise air pressure data, by rounding in steps of 500 mbar/1000
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], 500)
+    # standardise air pressure data, by rounding in steps of 500 mbar/1000
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], 500)
+    # there is no need to standardise accelerometer data, the variations are too small
+    # same for movement detection, as it can either be 0 or 1
 
     # we need complete instants (with all sensors)
     timestamp = instances.TIME.unique()
@@ -99,6 +110,8 @@ if __name__ == '__main__':
     print("Step 5: {}".format(len(instances)))
     
 
-    instances.to_csv(r"despacho_liencres_out_PRUEBA.csv", sep=';')
+    instances.to_csv(r"preprocessing_out.csv", sep=';')
 
     print("Rows after preprocessing: {}".format(len(instances)))
+    end = time.time()
+    print("Time elapsed: %f" %(end - start))
