@@ -24,8 +24,6 @@ def removeIncomplete (timestamp, instances):
         sys.stdout = fp
         sys.stderr = fp
         toremove = []
-    
-    
         _len = len(timestamp)
         for idx, i in enumerate(timestamp):
             inst = instances[instances['TIME'] == i]
@@ -34,11 +32,11 @@ def removeIncomplete (timestamp, instances):
             if idx%10 == 0:
                 print("{}/{}".format(idx, _len))
                 sys.stdout.flush()
+
     return toremove
 
 def toSteps(inst, step):
-    data = np.round(np.array(inst, dtype=float)/ step) * step
-    return  pd.DataFrame(data)
+    return inst.apply(lambda x : ((np.round(float(x) / step)) * step))
 
 if __name__ == '__main__':
     start = time.time()
@@ -72,23 +70,24 @@ if __name__ == '__main__':
     print("Step 4: {}".format(len(instances)))
 
     # ERROR: dataframe is still string despite conversion
-    # standardise temperature data, by rounding in steps of 0.5 degrees
+    # DISCRETISATION
+    # discretise temperature data by rounding in steps of 0.5 degrees
     instances['RAW'][instances['VAR'] == "Temperature"] = instances['RAW'][instances['VAR'] == "Temperature"].apply(float)
     instances['RAW'][instances['VAR'] == "Temperature"] /= 100.0
     instances['RAW'][instances['VAR'] == "Temperature"] = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], 0.5)
-    # standardise illuminance data, by rounding in steps of 1 lux
+    # discretise illuminance data by rounding in steps of 1 lux
     instances['RAW'][instances['VAR'] == "Illuminance"] = toSteps(instances['RAW'][instances['VAR'] == "Illuminance"], 100)
-    # standardise sound intensity data, by rounding in steps of 5 units (upper envelope value)
+    # discretise sound intensity data by rounding in steps of 5 units (upper envelope value)
     instances['RAW'][instances['VAR'] == "Intensity"] = toSteps(instances['RAW'][instances['VAR'] == "Intensity"], 5)
-    # standardise humidity data, by rounding in steps of 5 units (% of relative humidty)
+    # discretise humidity data by rounding in steps of 5 units (% of relative humidity)
     instances['RAW'][instances['VAR'] == "Humidity"] = instances['RAW'][instances['VAR'] == "Humidity"].apply(float)
     instances['RAW'][instances['VAR'] == "Humidity"] *= 10.0
     instances['RAW'][instances['VAR'] == "Humidity"] = toSteps(instances['RAW'][instances['VAR'] == "Humidity"], 5)
-    # standardise CO2 data, by rounding in steps of 50 ppm
+    # discretise CO2 data by rounding in steps of 50 ppm
     instances['RAW'][instances['VAR'] == "CO2 Concentration"] = toSteps(instances['RAW'][instances['VAR'] == "CO2 Concentration"], 50)
-    # standardise air pressure data, by rounding in steps of 500 mbar/1000
+    # discretise air pressure data by rounding in steps of 500 mbar/1000
     instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], 500)
-    # standardise air pressure data, by rounding in steps of 500 mbar/1000
+    # discretise air pressure data by rounding in steps of 500 mbar/1000
     instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], 500)
     # there is no need to standardise accelerometer data, the variations are too small
     # same for movement detection, as it can either be 0 or 1
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     timestamp = instances.TIME.unique()
 
     split = np.array_split(timestamp, multiprocessing.cpu_count())
-    print(len(split))
+    #print(len(split))
     pool = multiprocessing.Pool()
     the_partial = partial(removeIncomplete, instances=instances)
     #the_partial = partial(removeIncomplete, instances.copy())
