@@ -62,46 +62,53 @@ if __name__ == '__main__':
     for i in notChosen:
         instances = instances[instances['VAR'] != i]
 
-    for i in chosenSensors:
-        plt.figure()
-        plt.title(i)
-        plt.hist(instances['RAW'][instances['VAR'] == i], bins=50)
-        plt.show()
+    #for i in chosenSensors:
+    #    plt.figure()
+    #    plt.title(i)
+    #    plt.hist(instances['RAW'][instances['VAR'] == i], bins=50)
+    #    plt.show()
 
-    # DATA QUANTIZATION
-    # we bin the data of each sensor
-    # input data for FPGrowth: one column per sensor. Customise bins number here
-    numBins = 10
-    data = numpy.zeros(shape=(numBins,len(chosenSensors)))
-    allbins = numpy.zeros(shape=(numBins,len(chosenSensors)))
+    # input data for FPGrowth: one column per sensor
     # file with bins info
     hdr = ";".join(chosenSensors)
-    ####### why tf does 'for idx, i' not work
-    col = 0
-    for i in chosenSensors:
-        # get instances of sensor in numpy array
-        aux = instances['RAW'][instances['VAR'] == i].as_matrix()
-        # calculate bins
-        bins = numpy.linspace(min(aux), max(aux), numBins-1)
-        row = 0
-        for j in bins:
-            allbins[row][col] = j
-        # write bins to file
-        ##### TODO: write doesnt work too well. writes E22 power for god knows which reason
-        #bins.tofile(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\bins_file.csv", sep=";", format="%s")
-        #numpy.savetxt(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\bins_file.csv", bins, delimiter=';', newline='\n', header=hdr, footer='', comments='# ')
-        ### ALTITUDE VALUES ARE NEGATIVE, MONOTONY PROBLEMS
-        bin_means = (numpy.histogram(aux, bins, weights=aux)[0] / numpy.histogram(aux, bins)[0])
-        print bin_means
-        print "BINNING"
-        row = 0
-        # write binned data to our input data matrix
-        for j in bin_means:
-            data[row][col] = j
-            row += 1
-        col += 1
-    numpy.savetxt(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\bins.csv", allbins, delimiter=';', newline='\n', header=hdr, footer='', comments='# ')
-    numpy.savetxt(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\binned_values.csv", data, delimiter=';', newline='\n', header=hdr, footer='', comments='# ')
+
+    ############### FREQUENT PATTERN DETECTION ###############
+    inst_fp = instances
+    #eliminate = []
+    for col, i in enumerate(chosenSensors):
+        bins = inst_fp.i.unique()
+        # remove bins that contain less than 5% of the instances
+        for x in set(bins):
+            if inst_fp['RAW'][inst_fp['VAR'] == i].count(x) < (num_instances*0.05):
+                inst_fp['RAW'][inst_fp['VAR'] == i] = inst_fp['RAW'][inst_fp['VAR'] == i & inst_fp['RAW'] != x]
+    #    # get instances of sensor in numpy array
+    #    aux = inst_fp['RAW'][instances['VAR'] == i].as_matrix()
+    #    # calculate bins
+    #    bins = numpy.linspace(min(aux), max(aux), numBins-1)
+    #    row = 0
+    #    for j in bins:
+    #        allbins[row][col] = j
+    #    # write bins to file
+    #    ##### TODO: write doesnt work too well. writes E22 power for god knows which reason
+    #    #bins.tofile(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\bins_file.csv", sep=";", format="%s")
+    #    #numpy.savetxt(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\bins_file.csv", bins, delimiter=';', newline='\n', header=hdr, footer='', comments='# ')
+    #    ### ALTITUDE VALUES ARE NEGATIVE, MONOTONY PROBLEMS
+    #    bin_means = (numpy.histogram(aux, bins, weights=aux)[0] / numpy.histogram(aux, bins)[0])
+    #    print bin_means
+    #    print "BINNING"
+    #    # arbitrarily chosen 2% treshold
+    #    num_instances = len(inst_fp)
+    #    rows_to_keep = numpy.array([True]*len(inst_fp))
+    #    for x in set(bin_means):
+    #        if bin_means.count(x) < (num_instances*0.02):
+    #            rows_to_keep = numpy.logical_and( rows_to_keep, bin_means != x )
+    #    inst_fp = inst_fp[rows_to_keep]
+    #    # write binned data to our input data matrix
+    #    for row, j in enumerate(bin_means):
+    #        data[row][col] = j
+    #        row += 1
+    #numpy.savetxt(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\bins.csv", allbins, delimiter=';', newline='\n', header=hdr, footer='', comments='# ')
+    #numpy.savetxt(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\binned_values.csv", data, delimiter=';', newline='\n', header=hdr, footer='', comments='# ')
 
 
     #instances.to_dict('records')
@@ -116,7 +123,24 @@ if __name__ == '__main__':
     ########## PICKLE SAVES WEIRD STUFF
     patterns = fpg.find_frequent_patterns(data, 2)
     print(patterns)
-    pickle.dump( patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\patterns.csv", "wb" ) )
+    pickle.dump( patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_patterns.csv", "wb" ) )
     rules = fpg.generate_association_rules(patterns, 0.7)
     print(rules)
-    pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\rules.csv", "wb" ) )
+    pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_rules.csv", "wb" ) )
+
+
+    ############### SURPRISING PATTERN DETECTION ###############
+    inst_sp = instances 
+    for col, i in enumerate(chosenSensors):
+        bins = inst_fp.i.unique()
+        # remove bins that contain more than 5% of the instances
+        for x in set(bins):
+            if inst_fp['RAW'][inst_fp['VAR'] == i].count(x) > (num_instances*0.05):
+                inst_fp['RAW'][inst_fp['VAR'] == i] = inst_fp['RAW'][inst_fp['VAR'] == i & inst_fp['RAW'] != x]
+    surprising_items = pd.DataFrame()
+    patterns = fpg.find_frequent_patterns(data, 2)
+    print(patterns)
+    pickle.dump( patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_patterns.csv", "wb" ) )
+    rules = fpg.generate_association_rules(patterns, 0.7)
+    print(rules)
+    pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_rules.csv", "wb" ) )

@@ -35,8 +35,9 @@ def removeIncomplete (timestamp, instances):
 
     return toremove
 
-def toSteps(inst, step):
-    return inst.apply(lambda x : ((np.round(float(x) / step)) * step))
+def toSteps(inst, var, step):
+    # round to nearest 'step' step and concatenates the name of the sensor and the result
+    return inst.apply(lambda x : (var + " " + str((np.round(float(x) / step)) * step)))
 
 if __name__ == '__main__':
     start = time.time()
@@ -69,30 +70,36 @@ if __name__ == '__main__':
 
     print("Step 4: {}".format(len(instances)))
 
-    # ERROR: dataframe is still string despite conversion
-    # DISCRETISATION
+    
+    # DISCRETISATION & BINNING 
+    # discretise data by steps, and finish binning by adding the name of the sensor
     # discretise temperature data by rounding in steps of 0.5 degrees
     instances['RAW'][instances['VAR'] == "Temperature"] = instances['RAW'][instances['VAR'] == "Temperature"].apply(float)
     instances['RAW'][instances['VAR'] == "Temperature"] /= 100.0
-    instances['RAW'][instances['VAR'] == "Temperature"] = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], 0.5)
+    instances['RAW'][instances['VAR'] == "Temperature"] = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], "Temperature", 0.5)
     # discretise illuminance data by rounding in steps of 1 lux
-    instances['RAW'][instances['VAR'] == "Illuminance"] = toSteps(instances['RAW'][instances['VAR'] == "Illuminance"], 100)
+    instances['RAW'][instances['VAR'] == "Illuminance"] = toSteps(instances['RAW'][instances['VAR'] == "Illuminance"], "Illuminance", 100)
     # discretise sound intensity data by rounding in steps of 5 units (upper envelope value)
-    instances['RAW'][instances['VAR'] == "Intensity"] = toSteps(instances['RAW'][instances['VAR'] == "Intensity"], 5)
+    instances['RAW'][instances['VAR'] == "Intensity"] = toSteps(instances['RAW'][instances['VAR'] == "Intensity"], "Intensity", 5)
     # discretise humidity data by rounding in steps of 5 units (% of relative humidity)
     instances['RAW'][instances['VAR'] == "Humidity"] = instances['RAW'][instances['VAR'] == "Humidity"].apply(float)
     instances['RAW'][instances['VAR'] == "Humidity"] *= 10.0
-    instances['RAW'][instances['VAR'] == "Humidity"] = toSteps(instances['RAW'][instances['VAR'] == "Humidity"], 5)
+    instances['RAW'][instances['VAR'] == "Humidity"] = toSteps(instances['RAW'][instances['VAR'] == "Humidity"], "Humidity", 5)
     # discretise CO2 data by rounding in steps of 50 ppm
-    instances['RAW'][instances['VAR'] == "CO2 Concentration"] = toSteps(instances['RAW'][instances['VAR'] == "CO2 Concentration"], 50)
+    instances['RAW'][instances['VAR'] == "CO2 Concentration"] = toSteps(instances['RAW'][instances['VAR'] == "CO2 Concentration"], "CO2 Concentration", 50)
     # discretise air pressure data by rounding in steps of 500 mbar/1000
-    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], 500)
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], "Air Pressure", 500)
     # discretise air pressure data by rounding in steps of 500 mbar/1000
-    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], 500)
-    # there is no need to standardise accelerometer data, the variations are too small
-    # same for movement detection, as it can either be 0 or 1
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-X"], "Acceleration-X", 5)
+    # discretise air pressure data by rounding in steps of 500 mbar/1000
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Y"], "Acceleration-Y", 5)
+    # discretise air pressure data by rounding in steps of 500 mbar/1000
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Z"], "Acceleration-Z", 5)
+    # discretise air pressure data by rounding in steps of 500 mbar/1000
+    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Motion Detected"], "Motion Detected", 1)
 
     # we need complete instants (with all sensors)
+    print("Parallel removing incomplete instances. This might take some time")
     timestamp = instances.TIME.unique()
 
     split = np.array_split(timestamp, multiprocessing.cpu_count())
@@ -109,7 +116,7 @@ if __name__ == '__main__':
     print("Step 5: {}".format(len(instances)))
     
 
-    instances.to_csv(r"preprocessing_out.csv", sep=';')
+    instances.to_csv(r"preprocessing_out_new.csv", sep=';')
 
     print("Rows after preprocessing: {}".format(len(instances)))
     end = time.time()
