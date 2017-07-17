@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     print("Frequent Pattern analysis with FPGrowth")
      #path = raw_input("Please, write the path to the CSV file \n")
-    path = r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\despacho_liencres_out.csv"
+    path = r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\prep_nuevo.csv"
     # read CSV file and store it
     instances = pd.read_csv(path, sep=';')
     ##mmm = instances['RAW'][instances['VAR']== "CO2 Concentration"].as_matrix()
@@ -74,13 +74,14 @@ if __name__ == '__main__':
 
     ############### FREQUENT PATTERN DETECTION ###############
     inst_fp = instances
+    num_instances = len(inst_fp)
     #eliminate = []
     for col, i in enumerate(chosenSensors):
-        bins = inst_fp.i.unique()
+        bins = inst_fp['RAW'][inst_fp['VAR'] == i].unique()
         # remove bins that contain less than 5% of the instances
         for x in set(bins):
-            if inst_fp['RAW'][inst_fp['VAR'] == i].count(x) < (num_instances*0.05):
-                inst_fp['RAW'][inst_fp['VAR'] == i] = inst_fp['RAW'][inst_fp['VAR'] == i & inst_fp['RAW'] != x]
+            if inst_fp['RAW'][(inst_fp.VAR == i) & (inst_fp.RAW == x)].count() < (num_instances*0.05):
+                inst_fp['RAW'][inst_fp['VAR'] == i] = inst_fp['RAW'][(inst_fp.VAR == i) & (inst_fp.RAW != x)]
     #    # get instances of sensor in numpy array
     #    aux = inst_fp['RAW'][instances['VAR'] == i].as_matrix()
     #    # calculate bins
@@ -121,10 +122,10 @@ if __name__ == '__main__':
     frequent_items = pd.DataFrame()
     #minsup=0.15
     ########## PICKLE SAVES WEIRD STUFF
-    patterns = fpg.find_frequent_patterns(data, 2)
+    patterns = fpg.find_frequent_patterns(inst_fp, 5)
     print(patterns)
     pickle.dump( patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_patterns.csv", "wb" ) )
-    rules = fpg.generate_association_rules(patterns, 0.7)
+    rules = fpg.generate_association_rules(patterns, 2)
     print(rules)
     pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_rules.csv", "wb" ) )
 
@@ -132,13 +133,13 @@ if __name__ == '__main__':
     ############### SURPRISING PATTERN DETECTION ###############
     inst_sp = instances 
     for col, i in enumerate(chosenSensors):
-        bins = inst_fp.i.unique()
+        bins = inst_sp['RAW'][inst_sp['VAR'] == i].unique()
         # remove bins that contain more than 5% of the instances
         for x in set(bins):
-            if inst_fp['RAW'][inst_fp['VAR'] == i].count(x) > (num_instances*0.05):
-                inst_fp['RAW'][inst_fp['VAR'] == i] = inst_fp['RAW'][inst_fp['VAR'] == i & inst_fp['RAW'] != x]
+            if inst_sp['RAW'][(inst_sp.VAR == i) & (inst_sp.RAW == x)].count() > (num_instances*0.05):
+                inst_sp['RAW'][inst_sp['VAR'] == i] = inst_sp['RAW'][(inst_sp.VAR == i) & (inst_fp.RAW != x)]
     surprising_items = pd.DataFrame()
-    patterns = fpg.find_frequent_patterns(data, 2)
+    patterns = fpg.find_frequent_patterns(inst_sp, 2)
     print(patterns)
     pickle.dump( patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_patterns.csv", "wb" ) )
     rules = fpg.generate_association_rules(patterns, 0.7)

@@ -20,19 +20,19 @@ import time
 
 
 def removeIncomplete (timestamp, instances):
-    with open('{}.out'.format(os.getpid()), 'w') as fp:
-        sys.stdout = fp
-        sys.stderr = fp
-        toremove = []
-        _len = len(timestamp)
-        for idx, i in enumerate(timestamp):
-            inst = instances[instances['TIME'] == i]
-            if len(inst) != 13:
-                toremove += inst.index.tolist()
-            if idx%10 == 0:
-                print("{}/{}".format(idx, _len))
-                sys.stdout.flush()
-
+    #sys.stdout = open('{}.stdout'.format(os.getpid()), 'w')
+    #sys.stderr = open('{}.stderr'.format(os.getpid()), 'w')
+    toremove = []
+#    for i in multiprocessing.cpu_count():
+#        i[]:
+    _len = len(timestamp)
+    for idx, i in enumerate(timestamp):
+        instant = instances[instances['TIME'] == i]
+        if len(instant) != 13:
+            toremove.append(instant)
+        if idx%100 == 0:
+            print("{}/{}".format(idx, _len))
+            sys.stdout.flush()
     return toremove
 
 def toSteps(inst, var, step):
@@ -62,6 +62,7 @@ if __name__ == '__main__':
     instances = instances[instances['VAR'] != "Chip Temperature"]
     instances = instances[instances['VAR'] != "Stack Current"]
     instances = instances[instances['VAR'] != "Stack Voltage"]
+    instances = instances[instances['VAR'] != "Analog Value"]
 
     print("Step 3: {}".format(len(instances)))
     
@@ -90,33 +91,38 @@ if __name__ == '__main__':
     # discretise air pressure data by rounding in steps of 500 mbar/1000
     instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], "Air Pressure", 500)
     # discretise air pressure data by rounding in steps of 500 mbar/1000
-    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-X"], "Acceleration-X", 5)
+    instances['RAW'][instances['VAR'] == "Acceleration-X"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-X"], "Acceleration-X", 5)
     # discretise air pressure data by rounding in steps of 500 mbar/1000
-    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Y"], "Acceleration-Y", 5)
+    instances['RAW'][instances['VAR'] == "Acceleration-Y"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Y"], "Acceleration-Y", 5)
     # discretise air pressure data by rounding in steps of 500 mbar/1000
-    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Z"], "Acceleration-Z", 5)
+    instances['RAW'][instances['VAR'] == "Acceleration-Z"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Z"], "Acceleration-Z", 5)
     # discretise air pressure data by rounding in steps of 500 mbar/1000
-    instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Motion Detected"], "Motion Detected", 1)
+    instances['RAW'][instances['VAR'] == "Motion Detected"] = toSteps(instances['RAW'][instances['VAR'] == "Motion Detected"], "Motion Detected", 1)
+    # discretise altitude data by rounding in steps of 10m
+    instances['RAW'][instances['VAR'] == "Altitude"] = toSteps(instances['RAW'][instances['VAR'] == "Altitude"], "Altitude", 1000)
 
     # we need complete instants (with all sensors)
-    print("Parallel removing incomplete instances. This might take some time")
-    timestamp = instances.TIME.unique()
+    instances = instances.groupby(['TIME']).filter(lambda time_instant : len(time_instant) == 11)
+    #timestamp = instances.TIME.unique()
 
-    split = np.array_split(timestamp, multiprocessing.cpu_count())
+    #split = np.array_split(timestamp, multiprocessing.cpu_count())
     #print(len(split))
-    pool = multiprocessing.Pool()
-    the_partial = partial(removeIncomplete, instances=instances)
-    #the_partial = partial(removeIncomplete, instances.copy())
+    #pool = multiprocessing.Pool()
+    #the_partial = partial(removeIncomplete, instances=instances)
 
-    indexes_to_remove = []
-    for rem_list in pool.map(the_partial, split):
-        indexes_to_remove += rem_list
-    pool.close()
-    instances.drop(indexes_to_remove, inplace=True)
+    #to_remove = pool.map(the_partial, split)
+    #print(to_remove)
+
+    #dict = {}
+
+    #for i in instances:
+        #dict.setdefault(i['TIME'], []).append(i.index())
+    #print dict
+    #for key in dict:
     print("Step 5: {}".format(len(instances)))
     
 
-    instances.to_csv(r"preprocessing_out_new.csv", sep=';')
+    instances.to_csv(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\prep_nuevo.csv", sep=';')
 
     print("Rows after preprocessing: {}".format(len(instances)))
     end = time.time()
