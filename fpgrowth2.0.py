@@ -7,9 +7,11 @@ import math
 import pandas as pd
 import pyfpgrowth as fpg
 import matplotlib.pyplot as plt
+import time
 
     
 if __name__ == '__main__':
+    start = time.time()
     print("Frequent Pattern analysis with FPGrowth")
      #path = raw_input("Please, write the path to the CSV file \n")
     path = r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\prep_nuevo.csv"
@@ -32,6 +34,7 @@ if __name__ == '__main__':
     for i in aux:
         aux[idx] = i.lower().replace(" ", "")
         idx += 1
+    del instances['IDX']
    
     sensors = ["Motion Detected","Illuminance","Intensity","Temperature","Humidity","CO2 Concentration","Air Pressure","Acceleration-X","Acceleration-Y","Acceleration-Z","Altitude"]
     chosenSensors = []
@@ -82,6 +85,21 @@ if __name__ == '__main__':
         for x in set(bins):
             if inst_fp['RAW'][(inst_fp.VAR == i) & (inst_fp.RAW == x)].count() < (num_instances*0.05):
                 inst_fp['RAW'][inst_fp['VAR'] == i] = inst_fp['RAW'][(inst_fp.VAR == i) & (inst_fp.RAW != x)]
+    del inst_fp['VAR']
+    ############## REFINARLO, ESTO NO FUNCIONA ################
+#    inst_fp = list(inst_fp.groupby(['TIME']))
+#    #########FUNSIONA UNA POCA###########
+#    #hola = inst_fp.set_index(['TIME'])
+#    #subset5 = hola[['RAW']]
+#    #tuples5 = [tuple(x) for x in subset5.values]
+#    start = time.time()
+#    for i in inst_fp.TIME.unique():
+#        new3.append(tuple(inst_fp.RAW[inst_fp.TIME == i]))
+#    end = time.time()
+#    print('ELAPSED TIME:'+end-start)
+    
+    inst_fp = tuple(inst_fp.groupby('TIME')['RAW'].apply(tuple))
+    
     #    # get instances of sensor in numpy array
     #    aux = inst_fp['RAW'][instances['VAR'] == i].as_matrix()
     #    # calculate bins
@@ -119,25 +137,26 @@ if __name__ == '__main__':
     #    reader = csv.reader(f)
     #    instances = list(reader)
     #print("List created")
-    frequent_items = pd.DataFrame()
+    #frequent_items = pd.DataFrame()
     #minsup=0.15
     ########## PICKLE SAVES WEIRD STUFF
     patterns = fpg.find_frequent_patterns(inst_fp, 5)
     print(patterns)
-    pickle.dump( patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_patterns.csv", "wb" ) )
     rules = fpg.generate_association_rules(patterns, 2)
     print(rules)
     pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_rules.csv", "wb" ) )
 
 
     ############### SURPRISING PATTERN DETECTION ###############
-    inst_sp = instances 
+    inst_sp = instances
     for col, i in enumerate(chosenSensors):
         bins = inst_sp['RAW'][inst_sp['VAR'] == i].unique()
         # remove bins that contain more than 5% of the instances
         for x in set(bins):
             if inst_sp['RAW'][(inst_sp.VAR == i) & (inst_sp.RAW == x)].count() > (num_instances*0.05):
                 inst_sp['RAW'][inst_sp['VAR'] == i] = inst_sp['RAW'][(inst_sp.VAR == i) & (inst_fp.RAW != x)]
+    del inst_sp['VAR']
+    inst_sp = list(inst_sp.groupby(['TIME']))
     surprising_items = pd.DataFrame()
     patterns = fpg.find_frequent_patterns(inst_sp, 2)
     print(patterns)
@@ -145,3 +164,5 @@ if __name__ == '__main__':
     rules = fpg.generate_association_rules(patterns, 0.7)
     print(rules)
     pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_rules.csv", "wb" ) )
+    end = time.time()
+    print("Time elapsed: %f" %(end - start))
