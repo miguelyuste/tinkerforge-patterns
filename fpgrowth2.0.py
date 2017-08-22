@@ -1,10 +1,20 @@
 #C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\ct_meeting_6.2.csv
 
-import pickle
 import pandas as pd
 import pyfpgrowth as fpg
 import time
+import csv
 
+def writeOutput(dict, path):
+    w = csv.writer(open(path, "wb"))
+    for key, val in patterns.items():
+        w.writerow([key, val])
+        
+#def printOutput(dict):
+#    for x in dict:
+#        print (x)
+#        for y in dict[x]:
+#            print (y,':',dict[x][y])
     
 if __name__ == '__main__':
     start = time.time()
@@ -72,11 +82,15 @@ if __name__ == '__main__':
     # input data for FP-Growth must be immutable
     inst_fp = tuple(inst_fp.groupby('TIME')['RAW'].apply(tuple))
     patterns = fpg.find_frequent_patterns(inst_fp, 5)
-    print("Frequent patterns:\n"+patterns)
-    pickle.dump(patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_patterns.csv", "wb" ) )
+    print("Frequent patterns:\n")
+    #printOutput(patterns)
+    print(patterns)
+    writeOutput(patterns, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_patterns.txt")
     rules = fpg.generate_association_rules(patterns, 2)
-    print("Frequent rules:\n"+rules)
-    pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_rules.csv", "wb" ) )
+    print("Frequent association rules:\n")
+    #printOutput(rules)
+    print(patterns)
+    writeOutput(rules, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_rules.csv")
 
 
     ############### SURPRISING PATTERN DETECTION ###############
@@ -98,11 +112,15 @@ if __name__ == '__main__':
     # input data for FP-Growth must be immutable
     inst_sp = tuple(inst_sp.groupby('TIME')['RAW'].apply(tuple))
     patterns = fpg.find_frequent_patterns(inst_sp, 5)
-    print("Surprising patterns:\n"+patterns)
-    pickle.dump(patterns, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_patterns.csv", "wb" ) )
+    print("Surprising patterns:\n")
+    print(patterns)
+    #printOutput(patterns)
+    writeOutput(patterns, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_patterns.csv")
     rules = fpg.generate_association_rules(patterns, 2)
-    print("Surprising rules:\n"+rules)
-    pickle.dump( rules, open(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_rules.csv", "wb" ) )
+    print("Surprising association rules:\n")
+    print(patterns)
+    #printOutput(rules)
+    writeOutput(rules, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_rules.csv")
     
     
     
