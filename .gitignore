@@ -246,3 +246,4 @@ ModelManifest.xml
 *.stdout
 *.out
 *.csv
+/Output data

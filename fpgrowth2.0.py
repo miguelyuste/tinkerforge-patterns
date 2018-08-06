@@ -4,11 +4,14 @@ import pandas as pd
 import pyfpgrowth as fpg
 import time
 import csv
+import os
 
 def writeOutput(dict, path):
-    w = csv.writer(open(path, "wb"))
+    f_aux = open(path, "wb")
+    w = csv.writer(f_aux)
     for key, val in patterns.items():
         w.writerow([key, val])
+    f_aux.close()
         
 #def printOutput(dict):
 #    for x in dict:
@@ -18,21 +21,34 @@ def writeOutput(dict, path):
     
 if __name__ == '__main__':
     start = time.time()
-    print("Frequent and Surprising Pattern analysis with FPGrowth")
+    print("Frequent and Surprising Pattern analysis with FP-Growth")
      #path = raw_input("Please, write the path to the CSV file \n")
-    path = r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\prep_nuevo.csv"
+    path = r"C:\Users\migue\Documents\TFG\prep_nuevo.csv"
+    # create output data folder
+    output_path = os.path.dirname(os.path.abspath(__file__)) + "\Output data"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
     # read CSV file and store it
     instances = pd.read_csv(path, sep=';')
-    print("Please, select the sensors you want to analyse, separated by commas if there is more than one.")
-    # excluding accelerometer temperature readings
-    print("Possibilities: all, motion, light, sound, temperature, humidity, co2, pressure, acceleration, altitude")
-    aux = raw_input().split(",")
+    
+    
+    while True:
+        print("Please, select the sensors you want to analyse, separated by commas.")
+        # excluding accelerometer temperature readings
+        print("Possibilities: all, motion, light, sound, temperature, humidity, co2, pressure, acceleration, altitude")
+        aux = raw_input().split(",")
+        if (len(aux) < 2) & (aux[0].lower() != "all"):
+            print("Please choose at least two sensors.")
+        else: 
+            break
     idx = 0
     for i in aux:
         aux[idx] = i.lower().replace(" ", "")
         idx += 1
-    del instances['IDX']
-   
+    
+    #remove index column imported from preprocessed CSV
+    instances[instances.columns[1:]]   
+
     sensors = ["Motion Detected","Illuminance","Intensity","Temperature","Humidity","CO2 Concentration","Air Pressure","Acceleration-X","Acceleration-Y","Acceleration-Z","Altitude"]
     chosenSensors = []
     for sensor in aux:
@@ -81,16 +97,23 @@ if __name__ == '__main__':
     del inst_fp['VAR']
     # input data for FP-Growth must be immutable
     inst_fp = tuple(inst_fp.groupby('TIME')['RAW'].apply(tuple))
+    # find patterns, rules and write them to output files
     patterns = fpg.find_frequent_patterns(inst_fp, 5)
-    print("Frequent patterns:\n")
-    #printOutput(patterns)
-    print(patterns)
-    writeOutput(patterns, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_patterns.txt")
+    no_fp = len(patterns)
+    print("%i frequent patterns were found" % no_fp)
+    i = 0
+    while os.path.exists(output_path + ("\\frequent_patterns_%i.csv" % i)):
+        i += 1
+    f_freq_pat = output_path + ("\\frequent_patterns_%i.csv" % i)
+    writeOutput(patterns, f_freq_pat)
     rules = fpg.generate_association_rules(patterns, 2)
-    print("Frequent association rules:\n")
-    #printOutput(rules)
-    print(patterns)
-    writeOutput(rules, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\frequent_rules.csv")
+    no_fr = len(rules)
+    print("%i frequent pattern association rules were found" % no_fr)
+    i = 0
+    while os.path.exists(output_path + ("\\frequent_rules_%i.csv" % i)):
+        i += 1
+    f_freq_rules = output_path + ("\\frequent_rules_%i.csv" % i)
+    writeOutput(rules, f_freq_rules)
 
 
     ############### SURPRISING PATTERN DETECTION ###############
@@ -111,18 +134,36 @@ if __name__ == '__main__':
     del inst_sp['VAR']
     # input data for FP-Growth must be immutable
     inst_sp = tuple(inst_sp.groupby('TIME')['RAW'].apply(tuple))
-    patterns = fpg.find_frequent_patterns(inst_sp, 5)
-    print("Surprising patterns:\n")
-    print(patterns)
-    #printOutput(patterns)
-    writeOutput(patterns, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_patterns.csv")
+    patterns = fpg.find_frequent_patterns(inst_fp, 5)
+    no_sp = len(patterns)
+    print("%i surprising patterns were found" % no_sp)
+    i = 0
+    while os.path.exists(output_path + ("\\surprising_patterns_%i.csv" % i)):
+        i += 1
+    f_freq_pat = output_path + ("\\surprising_patterns_%i.csv" % i)
+    writeOutput(patterns, f_freq_pat)
     rules = fpg.generate_association_rules(patterns, 2)
-    print("Surprising association rules:\n")
-    print(patterns)
-    #printOutput(rules)
-    writeOutput(rules, r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\surprising_rules.csv")
-    
-    
-    
+    no_sr = len(rules)
+    print("%i surprising pattern association rules were found" % no_sr)
+    i = 0
+    while os.path.exists(output_path + ("\\surprising_rules_%i.csv" % i)):
+        i += 1
+    f_freq_rules = output_path + ("\\surprising_rules_%i.csv" % i)
+    writeOutput(rules, f_freq_rules)
+
+    ############### FINAL STEPS ###############
     end = time.time()
-    print("Time elapsed: %f seconds" %(end - start))
+    # log writing
+    print("Writing log file")
+    i = 0
+    while os.path.exists(output_path + ("\\log_%i.txt" % i)):
+        i += 1
+    f_log = open((output_path + ("\\log_%i.txt" % i)), "wb")
+    f_log.write("Time elapsed: %f seconds \n" %(end - start))
+    sensors = ', '.join(chosenSensors)
+    f_log.write("%i sensors used: %s \n" % (len(chosenSensors), sensors))
+    f_log.write("Number of frequent patterns found: %f \n" % no_fp)
+    f_log.write("Number of frequent pattern association rules found: %f \n" % no_fr)
+    f_log.write("Number of surprising patterns found: %f \n" % no_sp)
+    f_log.write("Number of surprising pattern association rules found: %f" % no_sr)
+    f_log.close()

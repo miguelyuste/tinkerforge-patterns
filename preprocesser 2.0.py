@@ -42,7 +42,7 @@ def toSteps(inst, var, step):
 if __name__ == '__main__':
     start = time.time()
     #path = raw_input("Please, write the path to the CSV file \n")
-    path = r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\despacho_liencres - copia.csv"
+    path = r"C:\Users\migue\Documents\TFG\despacho_liencres.csv"
 
     # read CSV file and store it
     instances = pd.read_csv(path, sep=';')
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     instances['RAW'][instances['VAR'] == "Temperature"] = toSteps(instances['RAW'][instances['VAR'] == "Temperature"], "Temperature", 0.5)
     # discretise illuminance data by rounding in steps of 1 lux
     instances['RAW'][instances['VAR'] == "Illuminance"] = toSteps(instances['RAW'][instances['VAR'] == "Illuminance"], "Illuminance", 100)
-    # discretise sound intensity data by rounding in steps of 5 units (upper envelope value)
+    # discretise sound intensity data by rounding in steps of 5 units (upper envelop value)
     instances['RAW'][instances['VAR'] == "Intensity"] = toSteps(instances['RAW'][instances['VAR'] == "Intensity"], "Intensity", 5)
     # discretise humidity data by rounding in steps of 5 units (% of relative humidity)
     instances['RAW'][instances['VAR'] == "Humidity"] = instances['RAW'][instances['VAR'] == "Humidity"].apply(float)
@@ -88,15 +88,13 @@ if __name__ == '__main__':
     instances['RAW'][instances['VAR'] == "Humidity"] = toSteps(instances['RAW'][instances['VAR'] == "Humidity"], "Humidity", 5)
     # discretise CO2 data by rounding in steps of 50 ppm
     instances['RAW'][instances['VAR'] == "CO2 Concentration"] = toSteps(instances['RAW'][instances['VAR'] == "CO2 Concentration"], "CO2 Concentration", 50)
-    # discretise air pressure data by rounding in steps of 500 mbar/1000
+    # discretise air pressure data by rounding in steps of 0.5 mbar (500 mbar/1000)
     instances['RAW'][instances['VAR'] == "Air Pressure"] = toSteps(instances['RAW'][instances['VAR'] == "Air Pressure"], "Air Pressure", 500)
-    # discretise air pressure data by rounding in steps of 500 mbar/1000
+    # discretise acceleration data by rounding in steps of 5 grams
     instances['RAW'][instances['VAR'] == "Acceleration-X"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-X"], "Acceleration-X", 5)
-    # discretise air pressure data by rounding in steps of 500 mbar/1000
     instances['RAW'][instances['VAR'] == "Acceleration-Y"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Y"], "Acceleration-Y", 5)
-    # discretise air pressure data by rounding in steps of 500 mbar/1000
     instances['RAW'][instances['VAR'] == "Acceleration-Z"] = toSteps(instances['RAW'][instances['VAR'] == "Acceleration-Z"], "Acceleration-Z", 5)
-    # discretise air pressure data by rounding in steps of 500 mbar/1000
+    # generate valid binary steps for the motion detector data
     instances['RAW'][instances['VAR'] == "Motion Detected"] = toSteps(instances['RAW'][instances['VAR'] == "Motion Detected"], "Motion Detected", 1)
     # discretise altitude data by rounding in steps of 10m
     instances['RAW'][instances['VAR'] == "Altitude"] = toSteps(instances['RAW'][instances['VAR'] == "Altitude"], "Altitude", 1000)
@@ -119,10 +117,11 @@ if __name__ == '__main__':
         #dict.setdefault(i['TIME'], []).append(i.index())
     #print dict
     #for key in dict:
+    instances.drop(instances.index[0], axis = 1)
     print("Step 5: {}".format(len(instances)))
     
 
-    instances.to_csv(r"C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\prep_nuevo.csv", sep=';')
+    instances.to_csv(r"C:\Users\migue\Documents\TFG\prep_nuevo.csv", sep=';')
 
     print("Rows after preprocessing: {}".format(len(instances)))
     end = time.time()
