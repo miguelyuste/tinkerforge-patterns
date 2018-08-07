@@ -247,3 +247,6 @@ ModelManifest.xml
 *.out
 *.csv
 /Output data
+/fpgrowth.pyc
+/miner.pyc
+/preprocesser.pyc

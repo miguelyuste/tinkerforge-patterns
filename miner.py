@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\ct_meeting_6.2.csv
 
 import pandas as pd
@@ -19,21 +20,15 @@ def writeOutput(dict, path):
 #        for y in dict[x]:
 #            print (y,':',dict[x][y])
     
-if __name__ == '__main__':
+def patterns(path, output_path):
     start = time.time()
-    print("Frequent and Surprising Pattern analysis with FP-Growth")
-     #path = raw_input("Please, write the path to the CSV file \n")
-    path = r"C:\Users\migue\Documents\TFG\prep_nuevo.csv"
-    # create output data folder
-    output_path = os.path.dirname(os.path.abspath(__file__)) + "\Output data"
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    print("Miner initialising...")
     # read CSV file and store it
     instances = pd.read_csv(path, sep=';')
     
     
     while True:
-        print("Please, select the sensors you want to analyse, separated by commas.")
+        print("Please select the sensors you want to analyse, separated by commas.")
         # excluding accelerometer temperature readings
         print("Possibilities: all, motion, light, sound, temperature, humidity, co2, pressure, acceleration, altitude")
         aux = raw_input().split(",")
@@ -69,7 +64,7 @@ if __name__ == '__main__':
         elif sensor == 'pressure':
             chosenSensors.append("Air Pressure")
         elif sensor == 'acceleration':
-            chosenSensors.append("Acceleration-X","Acceleration-Y","Acceleration-Z")
+            chosenSensors.extend(("Acceleration-X","Acceleration-Y","Acceleration-Z"))
         elif sensor == 'altitude':
             chosenSensors.append("Altitude")
 
@@ -77,9 +72,11 @@ if __name__ == '__main__':
     notChosen = [item for item in sensors if item not in chosenSensors]
     for i in notChosen:
         instances = instances[instances['VAR'] != i]
-    hdr = ";".join(chosenSensors)
+    sensors = ', '.join(chosenSensors)
+    print("Running miner with the following sensors: %s" % sensors)
 
     ############### FREQUENT PATTERN DETECTION ###############
+    print("Frequent pattern mining running...")
     inst_fp = instances.copy()
     for i in chosenSensors:
         # number of rows of the current sensor
@@ -114,9 +111,11 @@ if __name__ == '__main__':
         i += 1
     f_freq_rules = output_path + ("\\frequent_rules_%i.csv" % i)
     writeOutput(rules, f_freq_rules)
+    print("Frequent pattern mining done")
 
 
     ############### SURPRISING PATTERN DETECTION ###############
+    print("Surprising pattern mining running...")
     inst_sp = instances.copy()
     for i in chosenSensors:
         # number of rows of the current sensor
@@ -134,7 +133,8 @@ if __name__ == '__main__':
     del inst_sp['VAR']
     # input data for FP-Growth must be immutable
     inst_sp = tuple(inst_sp.groupby('TIME')['RAW'].apply(tuple))
-    patterns = fpg.find_frequent_patterns(inst_fp, 5)
+    # find patterns, rules and write them to output files
+    patterns = fpg.find_frequent_patterns(inst_sp, 5)
     no_sp = len(patterns)
     print("%i surprising patterns were found" % no_sp)
     i = 0
@@ -150,20 +150,15 @@ if __name__ == '__main__':
         i += 1
     f_freq_rules = output_path + ("\\surprising_rules_%i.csv" % i)
     writeOutput(rules, f_freq_rules)
+    print("Surprising pattern mining done")
 
     ############### FINAL STEPS ###############
     end = time.time()
-    # log writing
-    print("Writing log file")
-    i = 0
-    while os.path.exists(output_path + ("\\log_%i.txt" % i)):
-        i += 1
-    f_log = open((output_path + ("\\log_%i.txt" % i)), "wb")
-    f_log.write("Time elapsed: %f seconds \n" %(end - start))
-    sensors = ', '.join(chosenSensors)
-    f_log.write("%i sensors used: %s \n" % (len(chosenSensors), sensors))
-    f_log.write("Number of frequent patterns found: %f \n" % no_fp)
-    f_log.write("Number of frequent pattern association rules found: %f \n" % no_fr)
-    f_log.write("Number of surprising patterns found: %f \n" % no_sp)
-    f_log.write("Number of surprising pattern association rules found: %f" % no_sr)
-    f_log.close()
+    results = "Time elapsed in mining: %f seconds \n" %(end - start)
+    print (results)
+    results += "%i sensors used: %s \n" % (len(chosenSensors), sensors)
+    results += "Number of frequent patterns found: %i \n" % no_fp
+    results += "Number of frequent pattern association rules found: %i \n" % no_fr
+    results += "Number of surprising patterns found: %i \n" % no_sp
+    results += "Number of surprising pattern association rules found: %i" % no_sr
+    return results
