@@ -21,6 +21,7 @@ from functools import partial
 import time
 
 
+
 def removeIncomplete (timestamp, instances):
     #sys.stdout = open('{}.stdout'.format(os.getpid()), 'w')
     #sys.stderr = open('{}.stderr'.format(os.getpid()), 'w')
@@ -41,6 +42,7 @@ def toSteps(inst, var, step):
     # round to nearest 'step' step and concatenates the name of the sensor and the result
     return inst.apply(lambda x : (var + " " + str((np.round(float(x) / step)) * step)))
 
+
 def prep(path, output_path):
     start = time.time()
     print("Preprocessing module initialising...")
@@ -52,10 +54,11 @@ def prep(path, output_path):
     i = 0
     while os.path.exists(output_path + ("\\preprocessing_results_%i.csv" % i)):
         i += 1
-    out = open((output_path + ("\\preprocessing_results_%i.csv" % i)), "wb")
+    path_out = output_path + ("\\preprocessing_results_%i.csv" % i)
+    out = open(path_out, "wb")
    
     rows_before = len(instances)
-    results = "Rows before preprocessing: %i" % rows_before
+    results = "Rows before preprocessing: %i\n" % rows_before
     print(results)
     
     ### UNNECESSARY AND ERRONEOUS DATA REMOVAL ##
@@ -142,15 +145,15 @@ def prep(path, output_path):
     print("Preprocessing done. \nRows after preprocessing: %i" % rows_after)
     results += "Rows after preprocessing: %i \n" % rows_after
     
-    # elapsed time
-    elapsed = "Time elapsed in preprocessing: %f seconds \n" %(end - start)
-    print elapsed
-    results += elapsed
-    
     # discarded rows
     discarded_rows = rows_before - rows_after
     discarded = "Rows discarded: %i \n" % discarded_rows
     print discarded 
     results += discarded
     
-    return results
+    # elapsed time
+    elapsed = "Time elapsed in preprocessing: %f seconds \n" %(end - start)
+    print elapsed
+    results += elapsed
+    
+    return {'results':results, 'path_out':path_out}

@@ -7,7 +7,7 @@ import time
 import csv
 import os
 
-def writeOutput(dict, path):
+def writeOutput(patterns, path):
     f_aux = open(path, "wb")
     w = csv.writer(f_aux)
     for key, val in patterns.items():
@@ -19,8 +19,8 @@ def writeOutput(dict, path):
 #        print (x)
 #        for y in dict[x]:
 #            print (y,':',dict[x][y])
-    
-def patterns(path, output_path):
+  
+def find_patterns(path, output_path):
     start = time.time()
     print("Miner initialising...")
     # read CSV file and store it
@@ -74,8 +74,10 @@ def patterns(path, output_path):
         instances = instances[instances['VAR'] != i]
     sensors = ', '.join(chosenSensors)
     print("Running miner with the following sensors: %s" % sensors)
-
+    
     ############### FREQUENT PATTERN DETECTION ###############
+    minsup_fp = 5
+    minsup_fr = 5
     print("Frequent pattern mining running...")
     inst_fp = instances.copy()
     for i in chosenSensors:
@@ -95,7 +97,7 @@ def patterns(path, output_path):
     # input data for FP-Growth must be immutable
     inst_fp = tuple(inst_fp.groupby('TIME')['RAW'].apply(tuple))
     # find patterns, rules and write them to output files
-    patterns = fpg.find_frequent_patterns(inst_fp, 5)
+    patterns = fpg.find_frequent_patterns(inst_fp, minsup_fp)
     no_fp = len(patterns)
     print("%i frequent patterns were found" % no_fp)
     i = 0
@@ -103,7 +105,7 @@ def patterns(path, output_path):
         i += 1
     f_freq_pat = output_path + ("\\frequent_patterns_%i.csv" % i)
     writeOutput(patterns, f_freq_pat)
-    rules = fpg.generate_association_rules(patterns, 2)
+    rules = fpg.generate_association_rules(patterns, minsup_fr)
     no_fr = len(rules)
     print("%i frequent pattern association rules were found" % no_fr)
     i = 0
@@ -115,6 +117,8 @@ def patterns(path, output_path):
 
 
     ############### SURPRISING PATTERN DETECTION ###############
+    minsup_sp = 5
+    minsup_sr = 5
     print("Surprising pattern mining running...")
     inst_sp = instances.copy()
     for i in chosenSensors:
@@ -134,7 +138,7 @@ def patterns(path, output_path):
     # input data for FP-Growth must be immutable
     inst_sp = tuple(inst_sp.groupby('TIME')['RAW'].apply(tuple))
     # find patterns, rules and write them to output files
-    patterns = fpg.find_frequent_patterns(inst_sp, 5)
+    patterns = fpg.find_frequent_patterns(inst_sp, minsup_sp)
     no_sp = len(patterns)
     print("%i surprising patterns were found" % no_sp)
     i = 0
@@ -142,7 +146,7 @@ def patterns(path, output_path):
         i += 1
     f_freq_pat = output_path + ("\\surprising_patterns_%i.csv" % i)
     writeOutput(patterns, f_freq_pat)
-    rules = fpg.generate_association_rules(patterns, 2)
+    rules = fpg.generate_association_rules(patterns, minsup_sr)
     no_sr = len(rules)
     print("%i surprising pattern association rules were found" % no_sr)
     i = 0
@@ -160,5 +164,9 @@ def patterns(path, output_path):
     results += "Number of frequent patterns found: %i \n" % no_fp
     results += "Number of frequent pattern association rules found: %i \n" % no_fr
     results += "Number of surprising patterns found: %i \n" % no_sp
-    results += "Number of surprising pattern association rules found: %i" % no_sr
+    results += "Number of surprising pattern association rules found: %i \n" % no_sr
+    results += "Minimum support for frequent pattern mining: %i \n" %minsup_fp
+    results += "Minimum support for frequent pattern association rules mining: %i \n" %minsup_fr
+    results += "Minimum support for surprising pattern mining: %i \n" %minsup_sp
+    results += "Minimum support for surprising pattern association rules mining: %i \n" %minsup_sr
     return results

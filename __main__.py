@@ -6,7 +6,7 @@ import os
 
 
 if __name__ == '__main__':
-    ### SCRIPT THAT RUNS BOTH OF THE MODULES
+     ### SCRIPT THAT RUNS BOTH OF THE MODULES
     start = time.time()
     print("***** Frequent and Surprising Pattern mining with FP-Growth ***** \n Initialisation running...")
     
@@ -30,17 +30,22 @@ if __name__ == '__main__':
     #C:\Users\migue\Documents\TFG\despacho_liencres.csv
     path = raw_input("Please, write the path to the CSV file \n")
 
-    # run preprocesser
+    # run preprocesser 
+    # parametres: path to input CSV, path to output folder where results will be placed
     prep_res = prep.prep(path, output_path)
-    f_log.write(prep_res)
+    f_log.write(prep_res['results'])
+    
+    #print (memory_usage((prep, [], {})))
     
     # run miner
-    mining_res = fpg.patterns(path, output_path)
-    f_log.write(mining_res)    
+    # parametres: path to preprocesed CSV, path to output folder where results will be placed 
+    mining_res = fpg.find_patterns(prep_res['path_out'], output_path)
+    f_log.write(mining_res) 
     
     # final log writing
     end = time.time()
-    elapsed = "Total time elapsed: %f seconds \n" %(end - start)
+    elapsed = "Execution finished. Total time elapsed: %f seconds" %(end - start)
     f_log.write(elapsed)
-    print elapsed
-    f_log.close()
+    f_log.close()   
+    print("All output files and the log have been placed in an '\Output data' folder under the main directory of the scripts.\n")
+    
