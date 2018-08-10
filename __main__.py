@@ -32,14 +32,14 @@ if __name__ == '__main__':
 
     # run preprocesser 
     # parametres: path to input CSV, path to output folder where results will be placed
-    prep_res = prep.prep(path, output_path)
+    prep_res = prep.prep(i, path, output_path)
     f_log.write(prep_res['results'])
     
     #print (memory_usage((prep, [], {})))
     
     # run miner
     # parametres: path to preprocesed CSV, path to output folder where results will be placed 
-    mining_res = fpg.find_patterns(prep_res['path_out'], output_path)
+    mining_res = fpg.find_patterns(i, prep_res['path_out'], output_path)
     f_log.write(mining_res) 
     
     # final log writing

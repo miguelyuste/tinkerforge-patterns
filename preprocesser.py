@@ -43,7 +43,7 @@ def toSteps(inst, var, step):
     return inst.apply(lambda x : (var + " " + str((np.round(float(x) / step)) * step)))
 
 
-def prep(path, output_path):
+def prep(i, path, output_path):
     start = time.time()
     print("Preprocessing module initialising...")
 
@@ -51,9 +51,9 @@ def prep(path, output_path):
     instances = pd.read_csv(path, sep=';')
 
     # create output file
-    i = 0
-    while os.path.exists(output_path + ("\\preprocessing_results_%i.csv" % i)):
-        i += 1
+    #i = 0
+    #while os.path.exists(output_path + ("\\preprocessing_results_%i.csv" % i)):
+    #    i += 1
     path_out = output_path + ("\\preprocessing_results_%i.csv" % i)
     out = open(path_out, "wb")
    

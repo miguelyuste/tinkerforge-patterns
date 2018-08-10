@@ -20,7 +20,7 @@ def writeOutput(patterns, path):
 #        for y in dict[x]:
 #            print (y,':',dict[x][y])
   
-def find_patterns(path, output_path):
+def find_patterns(i, path, output_path):
     start = time.time()
     print("Miner initialising...")
     # read CSV file and store it
@@ -100,17 +100,17 @@ def find_patterns(path, output_path):
     patterns = fpg.find_frequent_patterns(inst_fp, minsup_fp)
     no_fp = len(patterns)
     print("%i frequent patterns were found" % no_fp)
-    i = 0
-    while os.path.exists(output_path + ("\\frequent_patterns_%i.csv" % i)):
-        i += 1
+    #i = 0
+    #while os.path.exists(output_path + ("\\frequent_patterns_%i.csv" % i)):
+    #    i += 1
     f_freq_pat = output_path + ("\\frequent_patterns_%i.csv" % i)
     writeOutput(patterns, f_freq_pat)
     rules = fpg.generate_association_rules(patterns, minsup_fr)
     no_fr = len(rules)
     print("%i frequent pattern association rules were found" % no_fr)
-    i = 0
-    while os.path.exists(output_path + ("\\frequent_rules_%i.csv" % i)):
-        i += 1
+    #i = 0
+    #while os.path.exists(output_path + ("\\frequent_rules_%i.csv" % i)):
+    #    i += 1
     f_freq_rules = output_path + ("\\frequent_rules_%i.csv" % i)
     writeOutput(rules, f_freq_rules)
     print("Frequent pattern mining done")
@@ -141,17 +141,17 @@ def find_patterns(path, output_path):
     patterns = fpg.find_frequent_patterns(inst_sp, minsup_sp)
     no_sp = len(patterns)
     print("%i surprising patterns were found" % no_sp)
-    i = 0
-    while os.path.exists(output_path + ("\\surprising_patterns_%i.csv" % i)):
-        i += 1
+    #i = 0
+    #while os.path.exists(output_path + ("\\surprising_patterns_%i.csv" % i)):
+    #    i += 1
     f_freq_pat = output_path + ("\\surprising_patterns_%i.csv" % i)
     writeOutput(patterns, f_freq_pat)
     rules = fpg.generate_association_rules(patterns, minsup_sr)
     no_sr = len(rules)
     print("%i surprising pattern association rules were found" % no_sr)
-    i = 0
-    while os.path.exists(output_path + ("\\surprising_rules_%i.csv" % i)):
-        i += 1
+    #i = 0
+    #while os.path.exists(output_path + ("\\surprising_rules_%i.csv" % i)):
+    #    i += 1
     f_freq_rules = output_path + ("\\surprising_rules_%i.csv" % i)
     writeOutput(rules, f_freq_rules)
     print("Surprising pattern mining done")
