@@ -250,3 +250,5 @@ ModelManifest.xml
 /fpgrowth.pyc
 /miner.pyc
 /preprocesser.pyc
+/duration.py
+/duration.pyc

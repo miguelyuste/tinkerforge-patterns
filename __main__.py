@@ -1,6 +1,5 @@
 import preprocesser as prep
 import miner as fpg
-
 import time
 import os
 
@@ -8,7 +7,7 @@ import os
 if __name__ == '__main__':
      ### SCRIPT THAT RUNS BOTH OF THE MODULES
     start = time.time()
-    print("***** Frequent and Surprising Pattern mining with FP-Growth ***** \n Initialisation running...")
+    print("***** Frequent and Surprising Pattern mining with FP-Growth ***** \nInitialisation running...")
     
     # create output data folders
     output_path = os.path.dirname(os.path.abspath(__file__))
