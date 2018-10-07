@@ -1,11 +1,9 @@
 #!/usr/bin/python
-#C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\ct_meeting_6.2.csv
 
 import pandas as pd
 import pyfpgrowth as fpg
 import time
 import csv
-import os
 from collections import OrderedDict
 
 def writeOutput(patterns, path):
@@ -14,12 +12,6 @@ def writeOutput(patterns, path):
     for key, val in patterns.items():
         w.writerow([key, val])
     f_aux.close()
-        
-#def printOutput(dict):
-#    for x in dict:
-#        print (x)
-#        for y in dict[x]:
-#            print (y,':',dict[x][y])
   
 def find_patterns(i, path, output_path):
     start = time.time()
@@ -68,17 +60,33 @@ def find_patterns(i, path, output_path):
             chosenSensors.extend(("Acceleration-X","Acceleration-Y","Acceleration-Z"))
         elif sensor == 'altitude':
             chosenSensors.append("Altitude")
-
+    
+    #get support levels from user. currently using same support level for pattern and rule detection,
+    #additional code needed to get separate values from both from the user
+    while True:
+        minsup_fp = raw_input("Please, specify the support level to use in the frequent pattern detection \n") 
+        if not (minsup_fp.isdigit()):
+            print("Please specify a number.")
+        else:
+            minsup_fr = minsup_fp = int(float(minsup_fp))
+            break
+        
+    while True:
+        minsup_sp = raw_input("Please, specify the support level to use in the surprising pattern detection \n")
+        if not (minsup_sp.isdigit()):
+            print("Please specify a number.")
+        else: 
+            minsup_sr = minsup_sp = int(float(minsup_sp))
+            break
+    
     #remove sensors we dont need
     notChosen = [item for item in sensors if item not in chosenSensors]
     for j in notChosen:
         instances = instances[instances['VAR'] != j]
     sensors = ', '.join(chosenSensors)
-    print("Running miner with the following sensors: %s" % sensors)
+    print("\nRunning miner with the following sensors: %s \n" % sensors)
     
     ############### FREQUENT PATTERN DETECTION ###############
-    minsup_fp = 5
-    minsup_fr = 5
     print("Frequent pattern mining running...")
     inst_fp = instances.copy()
     for k in chosenSensors:
@@ -99,39 +107,35 @@ def find_patterns(i, path, output_path):
     inst_fp = tuple(inst_fp.groupby('TIME')['RAW'].apply(tuple))
     # find patterns, rules and write them to output files
     patterns = fpg.find_frequent_patterns(inst_fp, minsup_fp)
+    
     # sort patterns in descending frequency order
     patterns = sorted(patterns.items(), key=lambda x: x[1], reverse=True)
     _tmp = OrderedDict()
     for k,v in patterns:
         _tmp[k] = v
+        
     patterns = _tmp
     no_fp = len(patterns)
     print("%i frequent patterns were found" % no_fp)
-    #i = 0
-    #while os.path.exists(output_path + ("\\frequent_patterns_%i.csv" % i)):
-    #    i += 1
     f_freq_pat = output_path + ("\\frequent_patterns_%i.csv" % idx)
     writeOutput(patterns, f_freq_pat)
     rules = fpg.generate_association_rules(patterns, minsup_fr)
+    
     # sort rules in descending frequency order
     rules = sorted(rules.items(), key=lambda x: x[1], reverse=True)
     _tmp = OrderedDict()
     for k,v in rules:
         _tmp[k] = v
+        
     rules = _tmp
     no_fr = len(rules)
     print("%i frequent pattern association rules were found" % no_fr)
-    #i = 0
-    #while os.path.exists(output_path + ("\\frequent_rules_%i.csv" % i)):
-    #    i += 1
     f_freq_rules = output_path + ("\\frequent_rules_%i.csv" % idx)
     writeOutput(rules, f_freq_rules)
     print("Frequent pattern mining done")
 
 
     ############### SURPRISING PATTERN DETECTION ###############
-    minsup_sp = 5
-    minsup_sr = 5
     print("Surprising pattern mining running...")
     inst_sp = instances.copy()
     for i in chosenSensors:
@@ -158,33 +162,30 @@ def find_patterns(i, path, output_path):
     _tmp = OrderedDict()
     for k,v in patterns:
         _tmp[k] = v
-    #patterns = { v[0]:v[1] for v in patterns }
+        
     patterns = _tmp
     no_sp = len(patterns)
     print("%i surprising patterns were found" % no_sp)
-    #i = 0
-    #while os.path.exists(output_path + ("\\surprising_patterns_%i.csv" % i)):
-    #    i += 1
     f_freq_pat = output_path + ("\\surprising_patterns_%i.csv" % idx)
     writeOutput(patterns, f_freq_pat)
     rules = fpg.generate_association_rules(patterns, minsup_sr)
+    
     # sort rules in descending frequency order
     rules = sorted(rules.items(), key=lambda x: x[1], reverse=True)
     _tmp = OrderedDict()
     for k,v in rules:
         _tmp[k] = v
+        
     rules = _tmp
     no_sr = len(rules)
     print("%i surprising pattern association rules were found" % no_sr)
-    #i = 0
-    #while os.path.exists(output_path + ("\\surprising_rules_%i.csv" % i)):
-    #    i += 1
     f_freq_rules = output_path + ("\\surprising_rules_%i.csv" % idx)
     writeOutput(rules, f_freq_rules)
     print("Surprising pattern mining done")
 
     ############### FINAL STEPS ###############
     end = time.time()
+    print("**PATTERN MINING DONE**\n")
     results = "Time elapsed in mining: %f seconds \n" %(end - start)
     print (results)
     results += "%i sensors used: %s \n" % (len(chosenSensors), sensors)

@@ -27,14 +27,13 @@ if __name__ == '__main__':
     f_log = open((output_path + ("\\log_%i.txt" % i)), "wb")
 
     #C:\Users\migue\Documents\TFG\despacho_liencres.csv
+    #C:\Users\migue\Documents\TFG\Data\Data\old\lbg_day.csv
     path = raw_input("Please, write the path to the CSV file \n")
 
     # run preprocesser 
     # parametres: path to input CSV, path to output folder where results will be placed
     prep_res = prep.prep(i, path, output_path)
     f_log.write(prep_res['results'])
-    
-    #print (memory_usage((prep, [], {})))
     
     # run miner
     # parametres: path to preprocesed CSV, path to output folder where results will be placed 

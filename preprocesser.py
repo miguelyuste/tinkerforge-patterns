@@ -7,27 +7,15 @@ Created on Tue Dec 20 19:14:51 2016
 @author: MiguelYuste
 """
 
-#C:\Users\migue\Documents\UC3M\TU Graz\Bachelor thesis\Data\despacho_liencres.csv
-#import glob
 import sys
-import os
-#import tempfile
-#import csv
 import pandas as pd
 import numpy as np
-import multiprocessing
-#import threading
-from functools import partial
 import time
 
 
 
 def removeIncomplete (timestamp, instances):
-    #sys.stdout = open('{}.stdout'.format(os.getpid()), 'w')
-    #sys.stderr = open('{}.stderr'.format(os.getpid()), 'w')
     toremove = []
-#    for i in multiprocessing.cpu_count():
-#        i[]:
     _len = len(timestamp)
     for idx, i in enumerate(timestamp):
         instant = instances[instances['TIME'] == i]
@@ -50,10 +38,6 @@ def prep(i, path, output_path):
     # read CSV file and store it
     instances = pd.read_csv(path, sep=';')
 
-    # create output file
-    #i = 0
-    #while os.path.exists(output_path + ("\\preprocessing_results_%i.csv" % i)):
-    #    i += 1
     path_out = output_path + ("\\preprocessing_results_%i.csv" % i)
     out = open(path_out, "wb")
    
@@ -62,13 +46,17 @@ def prep(i, path, output_path):
     print(results)
     
     ### UNNECESSARY AND ERRONEOUS DATA REMOVAL ##
-    print("Removing unnecessary and erroneous data...")
+    print("Removing unnecessary and erroneous data...\n")
     # drop useless columns
     del instances['UID']
     # removing accelerometer temperature readings before we delete the NAME column, which we dont need
     instances = instances[np.logical_not(np.logical_and(instances['VAR'] == "Temperature", instances['NAME'] == "Accelerometer Bricklet"))]
     del instances['NAME']
     del instances['UNIT']
+    
+    rows_after = len(instances)
+    discarded_rows = rows_before - rows_after
+    print("Unnecessary rows discarded: %i\n" % discarded_rows)
 
     # remove sensor data we dont need
     instances = instances[instances['VAR'] != "Chip Temperature"]
@@ -76,9 +64,17 @@ def prep(i, path, output_path):
     instances = instances[instances['VAR'] != "Stack Voltage"]
     instances = instances[instances['VAR'] != "Analog Value"]
     
+    rows_after = len(instances)
+    discarded_rows = rows_before - rows_after
+    print("Irrelevant sensor rows discarded: %i\n" % discarded_rows)
+    
     # remove erroneous readings
     instances['RAW'] = instances['RAW'].replace('^ERROR.*$', np.nan, regex=True)
     instances = instances.dropna()
+    
+    rows_after = len(instances)
+    discarded_rows = rows_before - rows_after
+    print("Erroneous rows discarded: %i\n" % discarded_rows)
     
     ### DISCRETISATION & BINNING ### 
     print("Binning process running...")
@@ -109,29 +105,17 @@ def prep(i, path, output_path):
     # discretise altitude data by rounding in steps of 10m
     instances['RAW'][instances['VAR'] == "Altitude"] = toSteps(instances['RAW'][instances['VAR'] == "Altitude"], "Altitude", 1000)
     
-    print("Binning process done")
+    print("Binning process done\n")
 
     # we need complete instants (with all sensors)
     print("Eliminating incomplete instants...")
     instances = instances.groupby(['TIME']).filter(lambda time_instant : len(time_instant) == 11)
-    print("Elimination complete. Writing results to output file...")
-    #timestamp = instances.TIME.unique()
-
-    #split = np.array_split(timestamp, multiprocessing.cpu_count())
-    #print(len(split))
-    #pool = multiprocessing.Pool()
-    #the_partial = partial(removeIncomplete, instances=instances)
-
-    #to_remove = pool.map(the_partial, split)
-    #print(to_remove)
-
-    #dict = {}
-
-    #for i in instances:
-        #dict.setdefault(i['TIME'], []).append(i.index())
-    #print dict
-    #for key in dict:
-    #instances.drop(instances.index[0], axis = 1)
+    
+    rows_after = len(instances)
+    discarded_rows = rows_before - rows_after
+    print("Incomplete instant rows discarded: %i\n" % discarded_rows)
+    
+    print("Writing results to output file...\n")
     
     ### FINAL STEPS ###
     # write results to output file
@@ -142,17 +126,17 @@ def prep(i, path, output_path):
     # INFO FOR LOG 
     # remaining rows
     rows_after = len(instances)
-    print("Preprocessing done. \nRows after preprocessing: %i" % rows_after)
+    print("**PREPROCESSING DONE** \nRows after preprocessing: %i" % rows_after)
     results += "Rows after preprocessing: %i \n" % rows_after
     
     # discarded rows
     discarded_rows = rows_before - rows_after
-    discarded = "Rows discarded: %i \n" % discarded_rows
+    discarded = "Total discarded rows: %i" % discarded_rows
     print discarded 
     results += discarded
     
     # elapsed time
-    elapsed = "Time elapsed in preprocessing: %f seconds \n" %(end - start)
+    elapsed = "Time elapsed in preprocessing: %f seconds" %(end - start)
     print elapsed
     results += elapsed
     
